@@ -143,7 +143,7 @@ SELECT STRFTIME('%Y-%m-%d', order_time) as day,
 FROM customer_orders co 
 GROUP BY STRFTIME('%Y-%m-%d', order_time)
 
-ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '123456’
+
 
 
 --=========================Runner and Customer Experience=====================================================
