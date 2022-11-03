@@ -1,16 +1,16 @@
---null values and data types in the customer_orders and runner_orders tables!
---
---A. Pizza Metrics
---How many pizzas were ordered?
---How many unique customer orders were made?
---How many successful orders were delivered by each runner?
---How many of each type of pizza was delivered?
---How many Vegetarian and Meatlovers were ordered by each customer?
---What was the maximum number of pizzas delivered in a single order?
---For each customer, how many delivered pizzas had at least 1 change and how many had no changes?
---How many pizzas were delivered that had both exclusions and extras?
---What was the total volume of pizzas ordered for each hour of the day?
---What was the volume of orders for each day of the week?
+-- null values and data types in the customer_orders and runner_orders tables!
+
+-- A. Pizza Metrics
+-- How many pizzas were ordered?
+-- How many unique customer orders were made?
+-- How many successful orders were delivered by each runner?
+-- How many of each type of pizza was delivered?
+-- How many Vegetarian and Meatlovers were ordered by each customer?
+-- What was the maximum number of pizzas delivered in a single order?
+-- For each customer, how many delivered pizzas had at least 1 change and how many had no changes?
+-- How many pizzas were delivered that had both exclusions and extras?
+-- What was the total volume of pizzas ordered for each hour of the day?
+-- What was the volume of orders for each day of the week?
 
 -- ============== Replace null in customer_orders ===============================
 UPDATE customer_orders
@@ -25,25 +25,25 @@ WHERE extras ='null' OR extras = '' OR extras IS NULL;
 -- =============== Replace null in runner_orders ================================
 UPDATE runner_orders
 SET pickup_time  = 0 -- take care here due date = 0
-WHERE pickup_time ='null' OR pickup_time = '' OR pickup_time ISNULL;
+WHERE pickup_time ='null' OR pickup_time = '' OR pickup_time IS NULL;
 
 UPDATE runner_orders
 SET distance  = 0 
-WHERE distance ='null' OR distance = '' OR distance ISNULL;
+WHERE distance ='null' OR distance = '' OR distance IS NULL;
 
 UPDATE runner_orders
 SET duration  = 0 
-WHERE duration ='null' OR duration = '' OR duration ISNULL;
+WHERE duration ='null' OR duration = '' OR duration IS NULL;
 
 UPDATE runner_orders
 SET cancellation  = 0 
-WHERE cancellation ='null' OR cancellation = '' OR cancellation ISNULL;
+WHERE cancellation ='null' OR cancellation = '' OR cancellation IS NULL;
 
 UPDATE runner_orders 
 SET distance=REPLACE(distance,'km','') WHERE distance LIKE '%km';
 
 UPDATE runner_orders 
-SET duration=REPLACE(duration,'minute','') WHERE duration LIKE '% minute' 
+SET duration=REPLACE(duration,'minute','') WHERE duration LIKE '% minute'; 
 
 UPDATE runner_orders 
 SET duration=REPLACE(duration,'mins','') WHERE duration LIKE '%mins';
