@@ -12,7 +12,7 @@ Duplicate job listings refer to two jobs at the same company with the same title
 
 WITH CTE
 
-SELECT COUNT(DISTINCT company_id) AS co_w_duplicate_jobs
+`SELECT COUNT(DISTINCT company_id) AS co_w_duplicate_jobs
 FROM (
   SELECT 
     company_id, 
@@ -24,7 +24,7 @@ FROM (
     company_id, 
     title, 
     description) AS jobs_grouped
-WHERE job_count > 1;
+WHERE job_count > 1;"`
 
 .
 .
@@ -37,7 +37,7 @@ WHERE job_count > 1;
 
 WITH SUBQUERY
 
-WITH jobs_grouped AS (
+`WITH jobs_grouped AS (
   SELECT 
     company_id, 
     title, 
@@ -51,5 +51,5 @@ WITH jobs_grouped AS (
 
 SELECT COUNT(DISTINCT company_id) AS co_w_duplicate_jobs
 FROM jobs_grouped
-WHERE job_count > 1;
+WHERE job_count > 1;`
 
