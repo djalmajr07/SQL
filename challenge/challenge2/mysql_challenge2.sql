@@ -148,14 +148,53 @@ GROUP BY STRFTIME('%Y-%m-%d', order_time)
 
 --=========================Runner and Customer Experience=====================================================
 
---1. How many runners signed up for each 1 week period? (i.e. week starts 2021-01-01)
---2. What was the average time in minutes it took for each runner to arrive at the Pizza Runner HQ to pickup the order?
---3. Is there any relationship between the number of pizzas and how long the order takes to prepare?
---4. What was the average distance travelled for each customer?
---5. What was the difference between the longest and shortest delivery times for all orders?
---6. What was the average speed for each runner for each delivery and do you notice any trend for these values?
---7. What is the successful delivery percentage for each runner?
+-- 1. How many runners signed up for each 1 week period? (i.e. week starts 2021-01-01)
+-- 2. What was the average time in minutes it took for each runner to arrive at the Pizza Runner HQ to pickup the order?
+-- 3. Is there any relationship between the number of pizzas and how long the order takes to prepare?
+-- 4. What was the average distance travelled for each customer?
+-- 5. What was the difference between the longest and shortest delivery times for all orders?
+-- 6. What was the average speed for each runner for each delivery and do you notice any trend for these values?
+-- 7. What is the successful delivery percentage for each runner?
 
+-- 1. How many runners signed up for each 1 week period? (i.e. week starts 2021-01-01)
+
+-- If the week starts in a different day than sunday use 1
+SELECT 
+	runner_id,
+	registration_date ,
+	WEEK(registration_date, 1) 
+FROM runners r 
+
+
+-- 2. What was the average time in minutes it took for each runner to arrive at the Pizza Runner HQ to pickup the order?
+-- change 0 for oldest date in sql and select > than
+-- compare cus ord order time to run ord pick time
+
+
+-- study TIMESTAMPDIFF
+CREATE TEMPORARY TABLE hd_pickup
+(SELECT 
+	DISTINCT (order_id),
+	ro.runner_id,
+	ROUND(TIMESTAMPDIFF(MINUTE, order_time, ro.pickup_time),2) as  pick_hd
+FROM  customer_orders co 
+INNER JOIN runner_orders ro USING (order_id)
+WHERE distance > 0) 
+
+
+select ROUND(avg(pick_hd),2)  from hd_pickup group by runner_id
+
+select * from hd_pickup
+
+
+
+
+
+-- 3. Is there any relationship between the number of pizzas and how long the order takes to prepare?
+-- 4. What was the average distance travelled for each customer?
+-- 5. What was the difference between the longest and shortest delivery times for all orders?
+-- 6. What was the average speed for each runner for each delivery and do you notice any trend for these values?
+-- 7. What is the successful delivery percentage for each runner?
 
 
 SELECT * FROM  customer_orders co 
