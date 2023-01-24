@@ -24,8 +24,8 @@ WHERE extras ='null' OR extras = '' OR extras IS NULL;
 
 -- =============== Replace null in runner_orders ================================
 UPDATE runner_orders
-SET pickup_time  = 0 -- take care here due date = 0
-WHERE pickup_time ='null' OR pickup_time = '' OR pickup_time IS NULL;
+SET pickup_time  = '2000-01-01 18:15:34' 
+WHERE pickup_time ='null' OR pickup_time = '' OR pickup_time IS NULL
 
 UPDATE runner_orders
 SET distance  = 0 
@@ -35,21 +35,33 @@ UPDATE runner_orders
 SET duration  = 0 
 WHERE duration ='null' OR duration = '' OR duration IS NULL;
 
+UPDATE runner_orders 
+SET distance=REPLACE(distance,'km','') 
+WHERE distance LIKE '%km';
+
+UPDATE runner_orders 
+SET duration=REPLACE(duration,'minute','') 
+WHERE duration LIKE '% minute'; 
+
+UPDATE runner_orders 
+SET duration=REPLACE(duration,'mins','') 
+WHERE duration LIKE '%mins';
+
+UPDATE runner_orders 
+SET duration=REPLACE(duration,'minutes','') 
+WHERE duration LIKE '%minutes';
+
+UPDATE runner_orders 
+SET cancellation = 1 
+WHERE cancellation LIKE '%Restaurant%'
+
+UPDATE runner_orders 
+SET cancellation = 2 
+WHERE cancellation LIKE '%Customer%'
+
 UPDATE runner_orders
 SET cancellation  = 0 
 WHERE cancellation ='null' OR cancellation = '' OR cancellation IS NULL;
-
-UPDATE runner_orders 
-SET distance=REPLACE(distance,'km','') WHERE distance LIKE '%km';
-
-UPDATE runner_orders 
-SET duration=REPLACE(duration,'minute','') WHERE duration LIKE '% minute'; 
-
-UPDATE runner_orders 
-SET duration=REPLACE(duration,'mins','') WHERE duration LIKE '%mins';
-
-UPDATE runner_orders 
-SET duration=REPLACE(duration,'minutes','') WHERE duration LIKE '%minutes';
 
 SELECT * FROM  runner_orders ro 
 -- ================================Pizza Metrics===========================================
@@ -184,17 +196,48 @@ WHERE distance > 0)
 
 select ROUND(avg(pick_hd),2)  from hd_pickup group by runner_id
 
-select * from hd_pickup
-
-
-
 
 
 -- 3. Is there any relationship between the number of pizzas and how long the order takes to prepare?
+-- count by order id 
+-- mean by each number 
+
+-- solving with temporary table 
+CREATE TEMPORARY TABLE pizza_toprep(
+SELECT 
+	co.order_id,
+	ROUND(TIMESTAMPDIFF(MINUTE, co.order_time, ro.pickup_time),2) as pick_hd
+FROM customer_orders co
+INNER JOIN runner_orders ro USING (order_id)
+WHERE ro.duration > 0
+)
+
+SELECT 
+order_id,
+COUNT(order_id) as qtd_pizza_by_order,
+AVG(pick_hd) as avg_prep_by_qtd
+FROM pizza_toprep
+GROUP BY order_id
+
+-- solving with subquery
+
+SELECT
+order_id,
+COUNT(order_id) as qtd_pizza_by_order,
+AVG(pick_hd) as avg_prep_by_qtd
+FROM(SELECT 
+	co.order_id,
+	ROUND(TIMESTAMPDIFF(MINUTE, co.order_time, ro.pickup_time),2) as pick_hd
+FROM customer_orders co
+INNER JOIN runner_orders ro USING (order_id)
+WHERE ro.duration > 0) AS pizza_toprep1
+GROUP BY order_id
+
 -- 4. What was the average distance travelled for each customer?
 -- 5. What was the difference between the longest and shortest delivery times for all orders?
 -- 6. What was the average speed for each runner for each delivery and do you notice any trend for these values?
 -- 7. What is the successful delivery percentage for each runner?
+
 
 
 SELECT * FROM  customer_orders co 
@@ -208,3 +251,4 @@ SELECT * FROM  pizza_toppings pt
 SELECT * FROM  runner_orders ro 
 
 SELECT * FROM  runners r 
+
