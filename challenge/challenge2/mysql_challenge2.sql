@@ -63,6 +63,15 @@ UPDATE runner_orders
 SET cancellation  = 0 
 WHERE cancellation ='null' OR cancellation = '' OR cancellation IS NULL;
 
+UPDATE runner_orders 
+SET distance = CAST(distance AS DECIMAL(10,2));
+
+UPDATE runner_orders 
+SET cancellation=CAST(cancellation AS UNSIGNED INTEGER)
+
+UPDATE runner_orders 
+SET duration = CAST(duration AS UNSIGNED INTEGER)
+
 SELECT * FROM  runner_orders ro 
 -- ================================Pizza Metrics===========================================
 
@@ -234,6 +243,26 @@ WHERE ro.duration > 0) AS pizza_toprep1
 GROUP BY order_id
 
 -- 4. What was the average distance travelled for each customer?
+
+SELECT 
+customer_id,
+ROUND(AVG(distance), 2) AS avg_dist_per_cust
+FROM (SELECT 
+	co.customer_id,
+	ro.distance
+FROM runner_orders ro 
+INNER JOIN customer_orders co USING (order_id)
+WHERE ro.cancellation = 0) AS all_cust
+GROUP BY 1
+
+
+
+
+
+
+
+
+
 -- 5. What was the difference between the longest and shortest delivery times for all orders?
 -- 6. What was the average speed for each runner for each delivery and do you notice any trend for these values?
 -- 7. What is the successful delivery percentage for each runner?
@@ -251,4 +280,5 @@ SELECT * FROM  pizza_toppings pt
 SELECT * FROM  runner_orders ro 
 
 SELECT * FROM  runners r 
+
 
