@@ -258,14 +258,62 @@ GROUP BY 1
 
 
 
-
-
-
-
-
 -- 5. What was the difference between the longest and shortest delivery times for all orders?
+SELECT 
+MIN(duration),
+MAX(duration),
+(MAX(duration) - MIN(duration)) AS max_difference
+FROM  runner_orders ro 
+WHERE duration > 0
+
+
+
 -- 6. What was the average speed for each runner for each delivery and do you notice any trend for these values?
+-- To convert minutes to hours, divide the minutes by 60. So the total time taken is 32/60 = 0.53 hours.
+-- Only the duration and the distance been the same the avg speed is 60km/h
+SELECT 
+runner_id,
+distance,
+duration,
+ROUND((duration/60),2) AS duration_minutes,
+ROUND((distance/(duration/60)),2) AS avg_speed
+FROM  runner_orders 
+WHERE cancellation = 0
+ORDER BY runner_id ASC
+
+-- SELECT 
+-- runner_id,
+-- ROUND((total_duration/total_distance),2) AS avg_speed
+-- FROM  (SELECT
+-- runner_id,
+-- SUM(duration) AS total_duration,
+-- SUM(distance) AS total_distance
+-- FROM  runner_orders ro 
+-- WHERE duration > 0 
+-- ) AS calc
+
+
+
 -- 7. What is the successful delivery percentage for each runner?
+SELECT 
+sub_all.runner_id,
+(sub_del.success_deliveries/sub_all.all_deliveries)*100 AS percentge_success_deliveries_by_runner
+FROM 
+	(SELECT 
+	runner_id,
+	COUNT(order_id) AS all_deliveries
+	FROM  runner_orders ro 
+	
+	GROUP BY 1) AS sub_all
+JOIN 
+	(SELECT 
+	runner_id,
+	COUNT(order_id) AS success_deliveries
+	FROM  runner_orders ro 
+	WHERE cancellation < 1
+	GROUP BY 1) AS sub_del
+ON sub_del.runner_id = sub_all.runner_id
+
 
 
 
