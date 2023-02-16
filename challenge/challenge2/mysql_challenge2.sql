@@ -317,6 +317,89 @@ ON sub_del.runner_id = sub_all.runner_id
 
 
 
+
+
+
+--=========================Ingredient Optimisation=====================================================
+
+-- 1. What are the standard ingredients for each pizza?
+-- 2. What was the most commonly added extra?
+-- 3. What was the most common exclusion?
+-- 4. Generate an order item for each record in the customers_orders table in the format of one of the following:
+-- 		Meat Lovers
+-- 		Meat Lovers - Exclude Beef
+-- 		Meat Lovers - Extra Bacon
+-- 		Meat Lovers - Exclude Cheese, Bacon - Extra Mushroom, Peppers
+-- 5. Generate an alphabetically ordered comma separated ingredient list for each pizza order from the customer_orders table and add a 2x in front of any relevant ingredients
+-- 		For example: "Meat Lovers: 2xBacon, Beef, ... , Salami"
+-- 6. What is the total quantity of each ingredient used in all delivered pizzas sorted by most frequent first?
+
+--=====================================================================================
+CREATE TEMPORARY TABLE row_split_customer_orders_temp AS
+SELECT t.row_num,
+       t.order_id,
+       t.customer_id,
+       t.pizza_id,
+       trim(j1.exclusions) AS exclusions,
+       trim(j2.extras) AS extras,
+       t.order_time
+FROM
+  (SELECT *,
+          row_number() over() AS row_num
+   FROM customer_orders) t
+INNER JOIN json_table(trim(replace(json_array(t.exclusions), ',', '","')),
+                      '$[*]' columns (exclusions varchar(50) PATH '$')) j1
+INNER JOIN json_table(trim(replace(json_array(t.extras), ',', '","')),
+                      '$[*]' columns (extras varchar(50) PATH '$')) j2 ;
+
+
+SELECT *
+FROM row_split_customer_orders_temp;
+
+
+--=====================================================================================
+CREATE
+TEMPORARY TABLE row_split_pizza_recipes_temp AS
+SELECT t.pizza_id,
+       trim(j.topping) AS topping_id
+FROM pizza_recipes t
+JOIN json_table(trim(replace(json_array(t.toppings), ',', '","')),
+                '$[*]' columns (topping varchar(50) PATH '$')) j ;
+
+
+SELECT *
+FROM row_split_pizza_recipes_temp;
+
+--=====================================================================================
+CREATE
+TEMPORARY TABLE standard_ingredients AS
+SELECT pizza_id,
+       pizza_name,
+       group_concat(DISTINCT topping_name) 'standard_ingredients'
+FROM row_split_pizza_recipes_temp
+INNER JOIN pizza_names USING (pizza_id)
+INNER JOIN pizza_toppings USING (topping_id)
+GROUP BY pizza_name
+ORDER BY pizza_id;
+
+SELECT *
+FROM standard_ingredients;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 SELECT * FROM  customer_orders co 
 
 SELECT * FROM  pizza_names pn 
@@ -328,5 +411,30 @@ SELECT * FROM  pizza_toppings pt
 SELECT * FROM  runner_orders ro 
 
 SELECT * FROM  runners r 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
