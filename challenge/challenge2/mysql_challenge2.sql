@@ -370,7 +370,8 @@ JOIN json_table(trim(replace(json_array(t.toppings), ',', '","')),
 SELECT *
 FROM row_split_pizza_recipes_temp;
 
---=====================================================================================
+-- =====================================================================================
+
 CREATE
 TEMPORARY TABLE standard_ingredients AS
 SELECT pizza_id,
@@ -379,7 +380,7 @@ SELECT pizza_id,
 FROM row_split_pizza_recipes_temp
 INNER JOIN pizza_names USING (pizza_id)
 INNER JOIN pizza_toppings USING (topping_id)
-GROUP BY pizza_name
+GROUP BY 1, 2
 ORDER BY pizza_id;
 
 SELECT *
@@ -389,16 +390,89 @@ FROM standard_ingredients;
 
 
 
+-- 1. What are the standard ingredients for each pizza?
+SELECT * FROM standard_ingredients;
+
+-- 2. What was the most commonly added extra?
+CREATE
+TEMPORARY TABLE most_added_top0 AS 
+SELECT 
+	pizza_id,
+	extras,
+	COUNT(extras) AS count_most_added_nr
+FROM row_split_customer_orders_temp
+WHERE extras != '0'
+GROUP BY 1,2
+
+SELECT 
+	pizza_id,
+	extras,
+	count_most_added_nr,
+	SUBSTRING_INDEX(SUBSTRING_INDEX(standard_ingredients, ',', 1), ',', -1)  AS MOST_ADDED_TOP_NAME
+FROM standard_ingredients
+INNER JOIN most_added_top0 mt USING(pizza_id)
+LIMIT 2
+
+-- 3. What was the most common exclusion?
+
+-- trim option
+-- SELECT trim(extras) AS extra_topping
+--           count(*) AS purchase_counts
+--    FROM row_split_customer_orders_temp
+--    WHERE extras != '0'
+--    GROUP BY extras
+   
+CREATE 
+TEMPORARY TABLE most_excluded_top AS 
+SELECT  
+	pizza_id,
+	exclusions,
+	COUNT(exclusions) AS most_excluded_top_nr
+FROM row_split_customer_orders_temp
+WHERE exclusions != 0
+GROUP BY 1,2
+
+SELECT 
+	pizza_id,
+	exclusions,
+	most_excluded_top_nr,
+	SUBSTRING_INDEX(SUBSTRING_INDEX(standard_ingredients, ',', 4), ',', -1) AS MOST_EXCLUDED_TOP_NAME
+FROM standard_ingredients
+INNER JOIN most_excluded_top USING(pizza_id)
+LIMIT 2
+
+-- 4. Generate an order item for each record in the customers_orders table in the format of one of the following:
+-- 		Meat Lovers
+-- 		Meat Lovers - Exclude Beef
+-- 		Meat Lovers - Extra Bacon
+-- 		Meat Lovers - Exclude Cheese, Bacon - Extra Mushroom, Peppers
+
+
+SELECT 
+	CASE 
+		WHEN exclusions = 0 AND pizza_id = 1 THEN 'Meat Lovers'
+		WHEN exclusions = 1 AND pizza_id = 1 THEN 'Meat Lovers - Exclude Beef'
+		WHEN extras = 1 AND pizza_id = 1 THEN 'Meat Lovers - Extra Bacon'
+		ELSE 'vegetarian'
+	END AS customized_orders	
+FROM row_split_customer_orders_temp;
+
+
+
+-- 5. Generate an alphabetically ordered comma separated ingredient list for each pizza order from the customer_orders table and add a 2x in front of any relevant ingredients
+-- 		For example: "Meat Lovers: 2xBacon, Beef, ... , Salami"
+-- 6. What is the total quantity of each ingredient used in all delivered pizzas sorted by most frequent first?
 
 
 
 
 
 
+SELECT * FROM standard_ingredients;
 
+SELECT * FROM row_split_pizza_recipes_temp;
 
-
-
+SELECT * FROM row_split_customer_orders_temp;
 
 SELECT * FROM  customer_orders co 
 
@@ -411,30 +485,3 @@ SELECT * FROM  pizza_toppings pt
 SELECT * FROM  runner_orders ro 
 
 SELECT * FROM  runners r 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
