@@ -448,16 +448,66 @@ LIMIT 2
 -- 		Meat Lovers - Exclude Cheese, Bacon - Extra Mushroom, Peppers
 
 
-SELECT 
+SELECT
+	*,
 	CASE 
 		WHEN exclusions = 0 AND pizza_id = 1 THEN 'Meat Lovers'
-		WHEN exclusions = 1 AND pizza_id = 1 THEN 'Meat Lovers - Exclude Beef'
+		WHEN exclusions = 0 AND pizza_id = 2 THEN 'Vegetarian'
+		WHEN exclusions = 3 AND pizza_id = 1 THEN 'Meat Lovers - Exclude Beef'
 		WHEN extras = 1 AND pizza_id = 1 THEN 'Meat Lovers - Extra Bacon'
-		ELSE 'vegetarian'
+		WHEN exclusions = 4 AND pizza_id = 1 THEN 'Meat Lovers - Exclude Cheese'
+		WHEN exclusions = 4 AND exclusions = 1 AND extras = 6 AND extras = 9 AND pizza_id = 1 THEN 'Meat Lovers - Exclude Cheese, Bacon - Extra Mushroom, Peppers'
+-- 		ELSE 'Meat Lover'
 	END AS customized_orders	
 FROM row_split_customer_orders_temp;
 
+ '1, 2, 3, 4, 5, 6, 8, 10'),
+ 1 Bacon,
+ 2 BBQ Sauce,
+ 3 Beef,
+ 4 Cheese,
+ 5 Chicken,
+ 6 Mushrooms,
+ 7 Onions,
+ 8 Pepperoni,
+ 9 Peppers,
+ 10 Salami
+ 11 Tomato Sauce,
+ 12 Tomatoes
 
+ 
+ CREATE TEMPORARY TABLE order_summary_cte AS
+  (SELECT pizza_name,
+          row_num,
+          order_id,
+          customer_id,
+          excluded_topping,
+          t2.topping_name AS extras_topping
+   FROM
+     (SELECT *,
+             topping_name AS excluded_topping
+      FROM row_split_customer_orders_temp
+      LEFT JOIN standard_ingredients USING (pizza_id)
+      LEFT JOIN pizza_toppings ON topping_id = exclusions) t1
+   LEFT JOIN pizza_toppings t2 ON t2.topping_id = extras)
+   
+   
+   
+   SELECT * FROM order_summary_cte
+   
+   
+   
+SELECT 
+	   order_id,
+       customer_id,
+       CASE
+           WHEN excluded_topping IS NULL AND extras_topping   IS NULL     THEN pizza_name
+           WHEN extras_topping   IS NULL AND excluded_topping IS NOT NULL THEN concat(pizza_name, ' - Exclude ', GROUP_CONCAT(DISTINCT excluded_topping))
+           WHEN excluded_topping IS NULL AND extras_topping   IS NOT NULL THEN concat(pizza_name, ' - Include ', GROUP_CONCAT(DISTINCT extras_topping))
+           ELSE concat(pizza_name, ' - Include ', GROUP_CONCAT(DISTINCT extras_topping), ' - Exclude ', GROUP_CONCAT(DISTINCT excluded_topping))
+       END AS order_item
+FROM order_summary_cte
+GROUP BY row_num;
 
 -- 5. Generate an alphabetically ordered comma separated ingredient list for each pizza order from the customer_orders table and add a 2x in front of any relevant ingredients
 -- 		For example: "Meat Lovers: 2xBacon, Beef, ... , Salami"
@@ -485,3 +535,30 @@ SELECT * FROM  pizza_toppings pt
 SELECT * FROM  runner_orders ro 
 
 SELECT * FROM  runners r 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
