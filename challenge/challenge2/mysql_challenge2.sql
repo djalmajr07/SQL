@@ -353,9 +353,21 @@ INNER JOIN json_table(trim(replace(json_array(t.extras), ',', '","')),
                       '$[*]' columns (extras varchar(50) PATH '$')) j2 ;
 
 
-SELECT *
-FROM row_split_customer_orders_temp;
 
+
+-- SUBSTRING_INDEX(string, delimiter, number)
+SELECT 
+order_id,
+customer_id,
+pizza_id,
+SUBSTRING_INDEX(SUBSTRING_INDEX(exclusions, ',', n), ',', -1) AS exclusion_all,
+SUBSTRING_INDEX(SUBSTRING_INDEX(extras, ',', m), ',', -1) AS extra_all,
+order_time
+FROM customer_orders
+JOIN (SELECT 1 n UNION SELECT 2) AS numbers
+ON CHAR_LENGTH(exclusions) - CHAR_LENGTH(REPLACE(exclusions, ',', '')) >= n - 1
+JOIN (SELECT 1 m UNION SELECT 2) as ext
+ON CHAR_LENGTH(extras) -  CHAR_LENGTH(REPLACE(extras, ',', '')) >= m - 1
 
 --=====================================================================================
 CREATE
@@ -365,10 +377,23 @@ SELECT t.pizza_id,
 FROM pizza_recipes t
 JOIN json_table(trim(replace(json_array(t.toppings), ',', '","')),
                 '$[*]' columns (topping varchar(50) PATH '$')) j ;
+               
+               
+
+CREATE
+TEMPORARY TABLE row_split_pizza_recipes_temp1 AS
+SELECT
+pizza_id,
+SUBSTRING_INDEX(SUBSTRING_INDEX(toppings, ',', n), ',', -1) as toppings_all 
+FROM pizza_recipes pr 
+JOIN (SELECT 1 n UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8) AS tops
+ON CHAR_LENGTH(toppings) - CHAR_LENGTH(REPLACE(toppings, ',', '')) >= n - 1 
+ORDER BY pizza_id 
+
 
 
 SELECT *
-FROM row_split_pizza_recipes_temp;
+FROM row_split_pizza_recipes_temp1;
 
 -- =====================================================================================
 
@@ -382,6 +407,15 @@ INNER JOIN pizza_names USING (pizza_id)
 INNER JOIN pizza_toppings USING (topping_id)
 GROUP BY 1, 2
 ORDER BY pizza_id;
+
+# modifing here 
+
+SELECT *
+FROM row_split_pizza_recipes_temp1
+INNER JOIN 
+INNER JOIN
+
+
 
 SELECT *
 FROM standard_ingredients;
@@ -461,19 +495,19 @@ SELECT
 	END AS customized_orders	
 FROM row_split_customer_orders_temp;
 
- '1, 2, 3, 4, 5, 6, 8, 10'),
- 1 Bacon,
- 2 BBQ Sauce,
- 3 Beef,
- 4 Cheese,
- 5 Chicken,
- 6 Mushrooms,
- 7 Onions,
- 8 Pepperoni,
- 9 Peppers,
- 10 Salami
- 11 Tomato Sauce,
- 12 Tomatoes
+--  '1, 2, 3, 4, 5, 6, 8, 10'),
+--  1 Bacon,
+--  2 BBQ Sauce,
+--  3 Beef,
+--  4 Cheese,
+--  5 Chicken,
+--  6 Mushrooms,
+--  7 Onions,
+--  8 Pepperoni,
+--  9 Peppers,
+--  10 Salami
+--  11 Tomato Sauce,
+--  12 Tomatoes
 
  
  CREATE TEMPORARY TABLE order_summary_cte AS
