@@ -447,7 +447,7 @@ FROM standard_ingredients
 INNER JOIN most_added_top0 mt USING(pizza_id)
 LIMIT 2
 
--- 3. What was the most common exclusion?
+-- 3. What was the most common exclusion?d
 
 -- trim option
 -- SELECT trim(extras) AS extra_topping
@@ -541,10 +541,40 @@ SELECT
            ELSE concat(pizza_name, ' - Include ', GROUP_CONCAT(DISTINCT extras_topping), ' - Exclude ', GROUP_CONCAT(DISTINCT excluded_topping))
        END AS order_item
 FROM order_summary_cte
-GROUP BY row_num;
+GROUP BY 1,2,row_num,extras_topping,excluded_topping,pizza_name;
 
 -- 5. Generate an alphabetically ordered comma separated ingredient list for each pizza order from the customer_orders table and add a 2x in front of any relevant ingredients
 -- 		For example: "Meat Lovers: 2xBacon, Beef, ... , Salami"
+
+## REVIEW THIS QUERY
+-- SELECT 
+-- 	order_id,
+-- 	customer_id,
+-- 	CASE 
+-- 		WHEN excluded_topping IS NULL AND extras_topping IS NULL THEN pizza_name
+-- 		WHEN excluded_topping IS NULL AND extras_topping IS NOT NULL THEN CONCAT(pizza_name, ' - Exclude', GROUP_CONCAT(DISTINCT excluded_topping))		
+-- 		WHEN excluded_topping IS NULL AND extras_topping  IS NOT NULL THEN CONCAT(pizza_name, ' - Include',  GROUP_CONCAT(DISTINCT extras_topping))
+-- 		ELSE concat(pizza_name, ' - Include ', GROUP_CONCAT(DISTINCT extras_topping), ' - Exclude ', GROUP_CONCAT(DISTINCT excluded_topping))
+-- 	END AS customized_order
+-- FROM order_summary_cte
+-- GROUP BY 1,2,row_num,extras_topping,excluded_topping,pizza_name;
+
+
+SELECT 
+	   order_id,
+       customer_id,
+       CASE
+           WHEN excluded_topping IS NULL AND extras_topping   IS NULL     THEN pizza_name
+           WHEN extras_topping   IS NULL AND excluded_topping IS NOT NULL THEN concat(pizza_name, ' - Exclude ', GROUP_CONCAT(DISTINCT excluded_topping))
+           WHEN excluded_topping IS NULL AND extras_topping   IS NOT NULL THEN concat(pizza_name, ' - 2x', GROUP_CONCAT(DISTINCT extras_topping))
+           ELSE concat(pizza_name, ' - Include ', GROUP_CONCAT(DISTINCT extras_topping), ' - Exclude ', GROUP_CONCAT(DISTINCT excluded_topping))
+       END AS order_item
+FROM order_summary_cte
+GROUP BY 1,2,row_num,extras_topping,excluded_topping,pizza_name;
+-- ORDER BY order_item
+
+
+
 -- 6. What is the total quantity of each ingredient used in all delivered pizzas sorted by most frequent first?
 
 
