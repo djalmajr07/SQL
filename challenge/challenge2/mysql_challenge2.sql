@@ -447,6 +447,7 @@ FROM standard_ingredients
 INNER JOIN most_added_top0 mt USING(pizza_id)
 LIMIT 2
 
+
 -- 3. What was the most common exclusion?d
 
 -- trim option
@@ -507,7 +508,6 @@ FROM row_split_customer_orders_temp;
 --  9 Peppers,
 --  10 Salami
 --  11 Tomato Sauce,
---  12 Tomatoes
 
  
  CREATE TEMPORARY TABLE order_summary_cte AS
@@ -577,9 +577,121 @@ GROUP BY 1,2,row_num,extras_topping,excluded_topping,pizza_name;
 
 -- 6. What is the total quantity of each ingredient used in all delivered pizzas sorted by most frequent first?
 
+SELECT 
+*
+FROM row_split_customer_orders_temp
 
 
 
+
+
+SELECT * FROM row_split_pizza_recipes_temp;
+
+
+
+
+SELECT * FROM row_split_customer_orders_temp cot1
+LEFT JOIN row_split_pizza_recipes_temp USING(pizza_id)
+
+--  '1, 2, 3, 4, 5, 6, 8, 10'),
+--  1 Bacon,
+--  2 BBQ Sauce,
+--  3 Beef,
+--  4 Cheese,
+--  5 Chicken,
+--  6 Mushrooms,
+--  7 Onions,
+--  8 Pepperoni,
+--  9 Peppers,
+--  10 Salami
+--  11 Tomato Sauce,
+
+
+
+CREATE TABLE pizza_ingredients_counts1 (
+  pizza_id INT,
+  ingredient VARCHAR(50),
+  ingredient_count INT
+);
+
+
+INSERT INTO pizza_ingredients_counts1
+SELECT 
+	pizza_id, 
+	topping_id, 
+	COUNT(*)
+FROM (SELECT * FROM row_split_customer_orders_temp cot1
+LEFT JOIN row_split_pizza_recipes_temp USING(pizza_id)) as a1
+GROUP BY pizza_id, topping_id;
+
+
+
+
+
+
+### extra 1,4,5
+
+UPDATE pizza_ingredients_counts1
+SET ingredient_count = ingredient_count + 1
+WHERE (pizza_id = 1 ) AND ingredient = 1;
+
+UPDATE pizza_ingredients_counts
+SET ingredient_count = ingredient_count + 1
+WHERE pizza_id = 1 AND ingredient = 5;
+
+UPDATE pizza_ingredients_counts1
+SET ingredient_count = ingredient_count + 1
+WHERE (pizza_id = 1 OR pizza_id = 2) AND ingredient = 4;
+
+
+
+##
+### exclusion 2,4,6
+UPDATE pizza_ingredients_counts1
+SET ingredient_count = ingredient_count - 1
+WHERE (pizza_id = 1 OR pizza_id = 2) AND ingredient = 4;
+
+UPDATE pizza_ingredients_counts1
+SET ingredient_count = ingredient_count - 1
+WHERE (pizza_id = 1 OR pizza_id = 2) AND ingredient = 6;
+
+
+UPDATE pizza_ingredients_counts
+SET ingredient_count = ingredient_count - 1
+WHERE pizza_id = 1 AND ingredient = 2;
+
+select * from pizza_ingredients_counts1
+
+
+SELECT * FROM  customer_orders co 
+
+
+
+
+
+SELECT
+    pizza_id,
+    pizza_ingredients,
+    SUM(ingredient_count) AS ingredient_count
+FROM
+    (
+        SELECT
+            id AS pizza_id,
+            pizza_ingredients,
+            CASE
+                -- Check if the "extra" column is equal to the current ingredient
+                -- and set the ingredient count to 1 or 0 depending on the result
+                WHEN extra = pizza_ingredients THEN 1
+                ELSE 0
+            END AS ingredient_count
+        FROM
+            pizza_ingredients_table
+        WHERE
+            pizza_id = 1
+    ) AS subquery
+GROUP BY
+    pizza_id,
+    pizza_ingredients;
 
 
 SELECT * FROM standard_ingredients;
@@ -599,30 +711,3 @@ SELECT * FROM  pizza_toppings pt
 SELECT * FROM  runner_orders ro 
 
 SELECT * FROM  runners r 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
