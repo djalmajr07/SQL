@@ -334,7 +334,7 @@ ON sub_del.runner_id = sub_all.runner_id
 -- 		For example: "Meat Lovers: 2xBacon, Beef, ... , Salami"
 -- 6. What is the total quantity of each ingredient used in all delivered pizzas sorted by most frequent first?
 
---=====================================================================================
+-- =====================================================================================
 CREATE TEMPORARY TABLE row_split_customer_orders_temp AS
 SELECT t.row_num,
        t.order_id,
@@ -667,47 +667,122 @@ SELECT * FROM  customer_orders co
 
 
 
+# D. Pricing and Ratings
+-- 1- If a Meat Lovers pizza costs $12 and Vegetarian costs $10 and there were no charges for changes - how much money has Pizza Runner made so far if there are no delivery fees?
+-- 2- What if there was an additional $1 charge for any pizza extras?
+-- 	- Add cheese is $1 extra
+-- 3- The Pizza Runner team now wants to add an additional ratings system that allows customers to rate their runner, how would you design an additional table for 
+-- this new dataset - generate a schema for this new table and insert your own data for ratings for each successful customer order between 1 to 5.
+-- 4- Using your newly generated table - can you join all of the information together to form a table which has the following information for successful deliveries?
+-- 	customer_id
+-- 	order_id
+-- 	runner_id
+-- 	rating
+-- 	order_time
+-- 	pickup_time
+-- 	Time between order and pickup
+-- 	Delivery duration
+-- 	Average speed
+-- 	Total number of pizzas
+-- 5- If a Meat Lovers pizza was $12 and Vegetarian $10 fixed prices with no cost for extras and each runner is paid $0.30 per kilometre traveled 
+-- - how much money does Pizza Runner have left over after these deliveries?
 
 
+
+-- 1- If a Meat Lovers pizza costs $12 and Vegetarian costs $10 and there were no charges for changes - how much money has Pizza Runner made so far if there are no delivery fees?
+ 
 SELECT
-    pizza_id,
-    pizza_ingredients,
-    SUM(ingredient_count) AS ingredient_count
-FROM
-    (
-        SELECT
-            id AS pizza_id,
-            pizza_ingredients,
-            CASE
-                -- Check if the "extra" column is equal to the current ingredient
-                -- and set the ingredient count to 1 or 0 depending on the result
-                WHEN extra = pizza_ingredients THEN 1
-                ELSE 0
-            END AS ingredient_count
-        FROM
-            pizza_ingredients_table
-        WHERE
-            pizza_id = 1
-    ) AS subquery
-GROUP BY
-    pizza_id,
-    pizza_ingredients;
+	CONCAT('$ ', SUM(CASE WHEN pizza_id = 1 THEN 12 ELSE 10 END)) AS total_money_made_by_pizza_runner
+FROM  customer_orders co
+LEFT JOIN  runner_orders ro USING(order_id)
+WHERE ro.cancellation = 0;
+ 
 
 
-SELECT * FROM standard_ingredients;
+-- 2- What if there was an additional $1 charge for any pizza extras?
+-- 	- Add cheese is $1 extra
 
-SELECT * FROM row_split_pizza_recipes_temp;
+                     
+ CREATE TEMPORARY TABLE customer_orders_pizza_price(SELECT *,
+		 CASE
+		 	WHEN pizza_id = 1 THEN 12 ELSE 10
+		 END AS pizza_price,
+		 length(extras) - length(replace(extras, ",", ""))+1 AS topping_count
+  FROM customer_orders co
+  INNER JOIN pizza_names USING (pizza_id)
+  INNER JOIN runner_orders USING (order_id)
+  WHERE cancellation = 0
+  ORDER BY order_id) 
+  
+  
+UPDATE customer_orders_pizza_price
+SET pizza_price = pizza_price + 
+           CASE WHEN extras <> '0' 
+                THEN LENGTH(extras) - LENGTH(REPLACE(extras, ',', '')) + 1 
+                ELSE 0 
+           END
+WHERE extras <> '0' 
+ 
+ 
+ select CONCAT('$', SUM(pizza_price))  from customer_orders_pizza_price 
+ 
+ select * from customer_orders_pizza_price
 
-SELECT * FROM row_split_customer_orders_temp;
+# PROCEDURE TO RUN EACH NEW ENTRY 
+DELIMITER //
 
+CREATE TRIGGER after_insert_t12
+AFTER INSERT ON t12
+FOR EACH ROW
+BEGIN
+    UPDATE t12
+    SET pizza_price = pizza_price + 
+               CASE WHEN extras <> '0' 
+                    THEN LENGTH(extras) - LENGTH(REPLACE(extras, ',', '')) + 1 
+                    ELSE 0 
+               END
+    WHERE order_id = NEW.order_id;
+END //
+
+DELIMITER ;
+
+
+-- 3- The Pizza Runner team now wants to add an additional ratings system that allows customers to rate their runner, how would you design an additional table for 
+-- this new dataset - generate a schema for this new table and insert your own data for ratings for each successful customer order between 1 to 5.
+
+DROP TABLE IF EXISTS runner_ratings;
+CREATE TABLE runner_ratings(
+		order_id INTEGER,
+		rating INTEGER,
+		feedback varchar(55));
+
+INSERT INTO runner_ratings(order_id, rating, feedback)
+VALUES
+    (1, 2, 'Cold pizza, I didnt like it'),
+    (2, 3, 'Good service'),
+    (3, 3, 'Pizza still pretty warm'),
+    (4, 1, 'ARE YOU EATING MY FOOD????'),
+    (5, 5, 'Efficient delivery'),
+    (7, 4, 'Good service'),
+    (8, 4, 'Super fast I really liked it'),
+    (10, 5, 'This guy came flying!');
+SELECT * FROM  runner_ratings
+
+
+-- SELECT * FROM standard_ingredients;
+-- 
+-- SELECT * FROM row_split_pizza_recipes_temp;
+-- 
+-- SELECT * FROM row_split_customer_orders_temp;
+-- 
 SELECT * FROM  customer_orders co 
-
-SELECT * FROM  pizza_names pn 
-
-SELECT * FROM  pizza_recipes pr  
-
-SELECT * FROM  pizza_toppings pt 
-
+-- 
+-- SELECT * FROM  pizza_names pn 
+-- 
+-- SELECT * FROM  pizza_recipes pr  
+-- 
+-- SELECT * FROM  pizza_toppings pt 
+-- 
 SELECT * FROM  runner_orders ro 
-
-SELECT * FROM  runners r 
+-- 
+-- SELECT * FROM  runners r 
